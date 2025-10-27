@@ -1,346 +1,326 @@
-import spaces
-import torch
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
-import gradio as gr
-import traceback
-import gc
-import numpy as np
-import librosa
-import time
-from huggingface_hub import snapshot_download
-from tts.infer_cli import MegaTTS3DiTInfer
-
-# 🚀 ULTIMATE GPU OPTIMIZATION
-torch.backends.cudnn.benchmark = True
-torch.set_float32_matmul_precision('high')
-torch.backends.cuda.matmul.allow_tf32 = True
-
-def download_weights():
-    """Download model weights from HuggingFace if not already present."""
-    repo_id = "mrfakename/MegaTTS3-VoiceCloning"
-    weights_dir = "checkpoints"
-    
-    if not os.path.exists(weights_dir):
-        print("Downloading model weights from HuggingFace...")
-        snapshot_download(
-            repo_id=repo_id,
-            local_dir=weights_dir,
-            local_dir_use_symlinks=False
-        )
-        print("Model weights downloaded successfully!")
-    else:
-        print("Model weights already exist.")
-    
-    return weights_dir
-
-# Download weights and initialize model
-download_weights()
-print("Initializing MegaTTS3 model...")
-
-# Model loading with WARMUP
-global infer_pipe
-if 'infer_pipe' not in globals():
-    infer_pipe = MegaTTS3DiTInfer()
-    print("Model loaded successfully!")
-    
-    # 🚀 MODEL WARMUP FOR MAXIMUM SPEED
-    print("🔥 Warming up model for maximum performance...")
-    try:
-        # Create dummy audio for warmup
-        dummy_audio = np.random.random(8000).astype(np.float32)
-        import soundfile as sf
-        sf.write("dummy.wav", dummy_audio, 16000)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abbas Voice Clone - Professional AI Voice Cloning</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         
-        with open("dummy.wav", 'rb') as f:
-            dummy_content = f.read()
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
         
-        with torch.no_grad():
-            resource_context = infer_pipe.preprocess(dummy_content)
-            _ = infer_pipe.forward(resource_context, "warmup", time_step=8)
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
         
-        os.remove("dummy.wav")
-        print("✅ Model warmup completed!")
-    except:
-        print("⚠️ Warmup skipped, but model is ready")
-
-def ultra_fast_audio_process(audio_path, target_sr=22050, max_duration=6):
-    """ULTRA FAST audio processing - quality preserved"""
-    try:
-        # 🚀 DIRECT LOAD - No unnecessary processing
-        wav, sr = librosa.load(audio_path, sr=target_sr, mono=True, duration=max_duration)
+        /* Header Styles */
+        .header {
+            text-align: center;
+            padding: 60px 20px 40px;
+        }
         
-        # Quick quality checks
-        if len(wav) < 4000:
-            raise ValueError("Audio too short")
+        .logo {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.4rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin: 40px 0;
+        }
+        
+        .features {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .features h2 {
+            font-size: 2rem;
+            margin-bottom: 25px;
+            border-left: 4px solid #4CAF50;
+            padding-left: 15px;
+        }
+        
+        .feature-list {
+            list-style: none;
+        }
+        
+        .feature-list li {
+            margin-bottom: 15px;
+            padding-left: 30px;
+            position: relative;
+        }
+        
+        .feature-list li:before {
+            content: "✅";
+            position: absolute;
+            left: 0;
+            font-size: 1.2rem;
+        }
+        
+        /* Demo Section */
+        .demo-section {
+            text-align: center;
+            padding: 40px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            margin: 30px 0;
+        }
+        
+        .demo-section h2 {
+            font-size: 2.2rem;
+            margin-bottom: 20px;
+        }
+        
+        .demo-section p {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 18px 45px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        /* How It Works */
+        .how-it-works {
+            margin: 60px 0;
+        }
+        
+        .how-it-works h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+        }
+        
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+        
+        .step {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        .step-number {
+            background: #4CAF50;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0 auto 20px;
+        }
+        
+        .step h3 {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            margin-top: 60px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .footer p {
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
             
-        if np.max(np.abs(wav)) < 0.01:
-            raise ValueError("Audio too quiet")
-        
-        # 🎯 PRESERVE ORIGINAL QUALITY - Minimal processing
-        peak = np.max(np.abs(wav))
-        if peak > 0.98:
-            wav = wav / peak * 0.98
-        
-        # Save with original quality
-        temp_path = "ultra_fast_temp.wav"
-        import soundfile as sf
-        sf.write(temp_path, wav, target_sr, subtype='PCM_16')
-        
-        print(f"✅ Audio ready: {len(wav)/sr:.1f}s - Quality preserved")
-        return temp_path
-        
-    except Exception as e:
-        print(f"❌ Audio processing failed: {e}")
-        return audio_path
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .btn {
+                padding: 15px 30px;
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">🎙️</div>
+            <h1>Abbas Voice Clone</h1>
+            <p>Revolutionary AI Technology - Clone Any Voice with Just 3 Seconds of Audio</p>
+        </div>
 
-@spaces.GPU
-@torch.no_grad()
-def generate_speech(inp_audio, inp_text, infer_timestep=10, p_w=1.4, t_w=3.0):
-    # ✅ TIME TRACKING
-    start_time = time.time()
-    
-    if not inp_audio or not inp_text:
-        gr.Warning("Please provide both reference audio and text to generate.")
-        return None
-    
-    try:
-        print(f"🚀 ULTRA FAST: Generating: {inp_text[:100]}...")
-        
-        # 🚀 OPTIMIZED MEMORY CLEANUP
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-        
-        # 🎯 ULTRA FAST AUDIO PROCESSING
-        try:
-            processed_audio_path = ultra_fast_audio_process(inp_audio, max_duration=6)
-            wav_path = processed_audio_path
-            print("✅ Audio processed with quality preservation")
-        except Exception as audio_error:
-            print(f"❌ Audio error: {audio_error}")
-            gr.Warning("Audio processing failed. Using original file.")
-            wav_path = inp_audio
-        
-        # Read audio file
-        with open(wav_path, 'rb') as file:
-            file_content = file.read()
-        
-        # 🚀 ULTRA FAST GENERATION
-        try:
-            print("🔄 Starting ULTRA FAST generation...")
-            
-            resource_context = infer_pipe.preprocess(file_content)
-            wav_bytes = infer_pipe.forward(
-                resource_context, 
-                inp_text, 
-                time_step=infer_timestep,
-                p_w=p_w, 
-                t_w=t_w
-            )
-            
-            end_time = time.time()
-            generation_time = end_time - start_time
-            
-            print(f"✅ ULTRA FAST Generation completed in {generation_time:.2f} seconds")
-            print(f"📊 Text Length: {len(inp_text)} characters")
-            print(f"🎯 Quality: EXACT VOICE CLONE PRESERVED")
-            
-            # Quick optimized cleanup
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
-                
-            return wav_bytes
-            
-        except Exception as gen_error:
-            print(f"❌ Generation error: {gen_error}")
-            gr.Warning(f"Generation failed: {str(gen_error)}")
-            return None
-        
-    except Exception as e:
-        print(f"❌ Overall error: {e}")
-        traceback.print_exc()
-        gr.Warning(f"Error: {str(e)}")
-        return None
-
-# 🎨 CLEAN PROFESSIONAL INTERFACE
-with gr.Blocks(
-    title="Abbas Voice Clone - Ultra Fast",
-    theme=gr.themes.Soft(
-        primary_hue="blue",
-        secondary_hue="gray",
-    ),
-    css="""
-    .gradio-container {
-        max-width: 900px !important;
-        margin: auto;
-        font-family: 'Segoe UI', system-ui;
-    }
-    .header {
-        text-align: center;
-        padding: 25px 20px 15px 20px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 10px 10px 0 0;
-        margin-bottom: 20px;
-    }
-    .header h1 {
-        font-size: 2.5em;
-        font-weight: 700;
-        margin: 0;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    }
-    .header h3 {
-        font-size: 1.2em;
-        font-weight: 300;
-        margin: 5px 0 0 0;
-        opacity: 0.9;
-    }
-    .footer {
-        text-align: center;
-        padding: 15px;
-        margin-top: 20px;
-        font-size: 14px;
-        color: #666;
-        border-top: 1px solid #e0e0e0;
-        background: #f8f9fa;
-        border-radius: 0 0 10px 10px;
-    }
-    .section-title {
-        font-size: 1.3em;
-        font-weight: 600;
-        margin-bottom: 15px;
-        color: #2c3e50;
-        border-left: 4px solid #667eea;
-        padding-left: 12px;
-    }
-    .tip-box {
-        background: #e8f4fd;
-        padding: 15px;
-        border-radius: 8px;
-        border-left: 4px solid #2196F3;
-    }
-    .generate-btn {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        border: none !important;
-        font-weight: 600 !important;
-    }
-    .speed-indicator {
-        background: #e8f5e8;
-        padding: 10px;
-        border-radius: 6px;
-        border-left: 4px solid #4CAF50;
-        margin: 10px 0;
-    }
-    """
-) as demo:
-    
-    # 🎯 HEADER
-    with gr.Column(elem_classes="header"):
-        gr.Markdown("# 🎙️ Abbas Voice Clone")
-        gr.Markdown("### Ultra Fast Voice Cloning - No Limits")
-    
-    # 📱 MAIN INTERFACE
-    with gr.Row(equal_height=True):
-        with gr.Column(scale=1):
-            # SPEED INDICATOR
-            gr.Markdown("""
-            <div class="speed-indicator">
-            🚀 <strong>Ultra Fast Mode</strong> - No Character Limits - Unlimited Text
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="features">
+                <h2>🚀 Amazing Features</h2>
+                <ul class="feature-list">
+                    <li><strong>Ultra-Fast Processing</strong> - Generate speech in seconds</li>
+                    <li><strong>High Quality Audio</strong> - Studio-like voice quality</li>
+                    <li><strong>Multiple Languages</strong> - Support for various languages</li>
+                    <li><strong>No Limits</strong> - Generate unlimited text length</li>
+                    <li><strong>Easy to Use</strong> - Simple upload and generate</li>
+                    <li><strong>Privacy Focused</strong> - Your data stays secure</li>
+                    <li><strong>Real-time Preview</strong> - Listen before downloading</li>
+                    <li><strong>Professional Results</strong> - Perfect for content creators</li>
+                </ul>
             </div>
-            """)
-            
-            # INPUT SECTION
-            gr.Markdown("### 🎵 Upload Voice Sample", elem_classes="section-title")
-            reference_audio = gr.Audio(
-                label="Upload reference voice (3-6 seconds recommended for speed)",
-                type="filepath",
-                sources=["upload", "microphone"],
-                elem_id="audio_input"
-            )
-            
-            gr.Markdown("### 📝 Enter Text", elem_classes="section-title")
-            text_input = gr.Textbox(
-                label="Text to convert to speech",
-                placeholder="Type any length text - no limits! Books, scripts, long paragraphs...",
-                lines=5,  # 🚀 3 se 5 lines
-                max_lines=10,  # 🚀 5 se 10 lines
-                show_copy_button=True
-                # 🚀 NO max_length - UNLIMITED TEXT
-            )
-            
-            # OPTIMIZED SETTINGS
-            with gr.Accordion("⚙️ Speed Optimized Settings", open=False):
-                infer_timestep = gr.Slider(
-                    label="Generation Speed",
-                    value=10,
-                    minimum=8,
-                    maximum=12,
-                    step=1,
-                    info="10 = Optimal Speed with Good Quality"
-                )
-                p_w = gr.Slider(
-                    label="Speech Clarity",
-                    value=1.4,
-                    minimum=1.3,
-                    maximum=1.5,
-                    step=0.1
-                )
-                t_w = gr.Slider(
-                    label="Voice Similarity", 
-                    value=3.0,
-                    minimum=2.8,
-                    maximum=3.2,
-                    step=0.1
-                )
-            
-            # GENERATE BUTTON
-            generate_btn = gr.Button(
-                "🚀 Generate Unlimited Text", 
-                variant="primary", 
-                size="lg",
-                elem_classes="generate-btn"
-            )
-        
-        with gr.Column(scale=1):
-            # OUTPUT SECTION
-            gr.Markdown("### 🔊 Generated Voice", elem_classes="section-title")
-            output_audio = gr.Audio(
-                label="Your exact voice clone output",
-                elem_id="audio_output",
-                interactive=False
-            )
-            
-            # UNLIMITED FEATURES
-            with gr.Accordion("💡 Unlimited Text Features", open=True):
-                gr.Markdown("""
-                <div class="tip-box">
-                **📚 Unlimited Text Support:**
-                - **No character limits** - write as much as you want
-                - **Books, scripts, long articles** supported
-                - **Multiple paragraphs** work perfectly
-                - **Automatic batch processing** for long texts
-                - **Same fast speed** regardless of text length
-                
-                **🚀 Speed: 3-15 seconds (depending on text length)**
-                </div>
-                """)
-    
-    # 👣 FOOTER
-    with gr.Column(elem_classes="footer"):
-        gr.Markdown("**Abbas Voice Clone** • Unlimited Text • Ultra Fast • Professional AI")
-    
-    # 🎯 BUTTON ACTION
-    generate_btn.click(
-        fn=generate_speech,
-        inputs=[reference_audio, text_input, infer_timestep, p_w, t_w],
-        outputs=[output_audio],
-        api_name="generate_voice"
-    )
 
-if __name__ == '__main__':
-    demo.launch(
-        server_name='0.0.0.0', 
-        server_port=7860, 
-        debug=False,
-        show_error=True
-    )
+            <div class="features">
+                <h2>🎯 Perfect For</h2>
+                <ul class="feature-list">
+                    <li><strong>Content Creators</strong> - YouTube videos, podcasts</li>
+                    <li><strong>Business Professionals</strong> - Presentations, training</li>
+                    <li><strong>Educators</strong> - Online courses, tutorials</li>
+                    <li><strong>Writers</strong> - Audiobooks, storytelling</li>
+                    <li><strong>Developers</strong> - App integrations, voice assistants</li>
+                    <li><strong>Marketers</strong> - Advertisements, promotions</li>
+                    <li><strong>Accessibility</strong> - Voice assistance for everyone</li>
+                    <li><strong>Entertainment</strong> - Voice acting, dubbing</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Demo Section -->
+        <div class="demo-section">
+            <h2>🎧 Ready to Experience Magic?</h2>
+            <p>Click below to try our advanced voice cloning technology. No signup required!</p>
+            <a href="https://nadeem5204-megatts3-voice-cloning.hf.space" class="btn">🚀 Try Live Voice Clone App</a>
+            <br>
+            <a href="https://nadeem5204-megatts3-voice-cloning.hf.space" class="btn btn-secondary">🎯 Start Cloning Now</a>
+        </div>
+
+        <!-- How It Works -->
+        <div class="how-it-works">
+            <h2>💡 How It Works</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Upload Voice Sample</h3>
+                    <p>Record or upload 3-6 seconds of clear audio in any language</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Enter Your Text</h3>
+                    <p>Type any text you want the AI to speak - no character limits!</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Generate Speech</h3>
+                    <p>Click generate and get perfect voice clone in seconds</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h3>Download & Use</h3>
+                    <p>Download high-quality audio and use anywhere you want</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Final CTA -->
+        <div class="demo-section">
+            <h2>🔮 Transform Your Voice Today</h2>
+            <p>Join thousands of users who are already creating amazing content with our AI technology</p>
+            <a href="https://nadeem5204-megatts3-voice-cloning.hf.space" class="btn">🌟 Start Creating Magic Now</a>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p><strong>Abbas Voice Clone</strong> - Advanced AI Voice Cloning Technology</p>
+            <p>Powered by Cutting-Edge Machine Learning • Fast • Reliable • Professional</p>
+            <p>© 2024 Abbas Voice Clone. All rights reserved.</p>
+        </div>
+    </div>
+
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Add some interactive effects
+        document.addEventListener('DOMContentLoaded', function() {
+            const buttons = document.querySelectorAll('.btn');
+            buttons.forEach(button => {
+                button.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                });
+                button.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
