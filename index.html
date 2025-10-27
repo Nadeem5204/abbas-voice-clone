@@ -1,10 +1,158 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Voice Clone App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .button {
+            background: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: background 0.3s;
+        }
+        .button:hover {
+            background: #45a049;
+        }
+        .button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        .button.stop {
+            background: #f44336;
+        }
+        .button.stop:hover {
+            background: #da190b;
+        }
+        .audio-player {
+            width: 100%;
+            margin: 20px 0;
+        }
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to My Voice Clone App</h1>
-    <p>Site is under construction...</p>
+    <div class="container">
+        <h1>🎤 Voice Clone App</h1>
+        
+        <div style="text-align: center;">
+            <button class="button" id="recordBtn">🎤 Start Recording</button>
+            <button class="button stop" id="stopBtn" disabled>⏹️ Stop Recording</button>
+        </div>
+
+        <div class="status" id="status">
+            Ready to record...
+        </div>
+
+        <div id="audioContainer" style="display: none;">
+            <h3>Recorded Audio:</h3>
+            <audio class="audio-player" id="audioPlayback" controls></audio>
+            <br>
+            <button class="button" id="cloneBtn">🔮 Clone Voice</button>
+        </div>
+
+        <div id="resultContainer" style="display: none;">
+            <h3>Cloned Voice:</h3>
+            <audio class="audio-player" id="clonedAudio" controls></audio>
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        const recordBtn = document.getElementById('recordBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const status = document.getElementById('status');
+        const audioContainer = document.getElementById('audioContainer');
+        const audioPlayback = document.getElementById('audioPlayback');
+        const cloneBtn = document.getElementById('cloneBtn');
+        const resultContainer = document.getElementById('resultContainer');
+        const clonedAudio = document.getElementById('clonedAudio');
+
+        // Start Recording
+        recordBtn.addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    audioPlayback.src = audioUrl;
+                    audioContainer.style.display = 'block';
+                };
+
+                mediaRecorder.start();
+                recordBtn.disabled = true;
+                stopBtn.disabled = false;
+                status.textContent = "🔴 Recording... Click Stop when done";
+                status.style.background = "#ff4444";
+            } catch (error) {
+                status.textContent = "Error: " + error.message;
+            }
+        });
+
+        // Stop Recording
+        stopBtn.addEventListener('click', () => {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                recordBtn.disabled = false;
+                stopBtn.disabled = true;
+                status.textContent = "✅ Recording stopped. Click Clone Voice to process";
+                status.style.background = "#4CAF50";
+            }
+        });
+
+        // Clone Voice (Simulated)
+        cloneBtn.addEventListener('click', () => {
+            status.textContent = "🔄 Cloning voice... This is a demo version";
+            status.style.background = "#ff9800";
+            
+            // Simulate processing delay
+            setTimeout(() => {
+                // In real app, you would process audio here
+                // For demo, we'll use the same audio
+                clonedAudio.src = audioPlayback.src;
+                resultContainer.style.display = 'block';
+                status.textContent = "✅ Voice cloning complete! Play the cloned audio below";
+                status.style.background = "#4CAF50";
+            }, 2000);
+        });
+    </script>
 </body>
 </html>
